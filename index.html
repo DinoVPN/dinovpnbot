@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Доступ</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: black;
+            color: white;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .greeting {
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background-color: black;
+            color: white;
+            font-size: 16px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #888;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        input[type="checkbox"] {
+            margin-right: 10px;
+            accent-color: white;
+        }
+
+        button {
+            background-color: white;
+            color: black;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            transition: opacity 0.3s;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        .logout-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: transparent;
+            color: white;
+            border: 1px solid white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: none;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100vh;
+            border: none;
+            display: none;
+        }
+
+        .user-profile {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-bottom: 5px;
+            border: 2px solid white;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .username {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .subscription {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 2px;
+        }
+
+        .profile-menu {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            background-color: #111;
+            border-radius: 10px;
+            padding: 15px;
+            width: 200px;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+        }
+
+        .profile-menu button {
+            background-color: transparent;
+            color: white;
+            border: 1px solid #333;
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            width: auto;
+        }
+
+        .profile-menu button:hover {
+            background-color: #222;
+        }
+
+        .profile-menu .logout-menu {
+            border-top: 1px solid #333;
+            padding-top: 10px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="authContainer">
+        <div class="greeting" id="greeting"></div>
+        <div class="input-group">
+            <input type="text" id="tokenInput" placeholder="Введите ключ доступа">
+        </div>
+        <div class="checkbox-container">
+            <input type="checkbox" id="rememberMe">
+            <label for="rememberMe">Запомнить меня</label>
+        </div>
+        <button id="loginBtn">Войти</button>
+    </div>
+
+    <div class="user-profile" id="userProfile">
+        <div class="avatar" id="userAvatar">
+            <img src="https://cdn-icons-png.flaticon.com/512/2111/2111644.png" alt="User Avatar">
+        </div>
+        <div class="username" id="username">Username</div>
+        <div class="subscription" id="subscriptionInfo">Не авторизован</div>
+    </div>
+
+    <div class="profile-menu" id="profileMenu">
+        <button id="openVpnBtn">Зайти в VPN</button>
+        <div class="logout-menu">
+            <button id="logoutMenuBtn">Выйти</button>
+        </div>
+    </div>
+
+    <iframe id="contentFrame"></iframe>
+    <button class="logout-btn" id="logoutBtn">Выйти</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const greeting = document.getElementById('greeting');
+            const tokenInput = document.getElementById('tokenInput');
+            const rememberMe = document.getElementById('rememberMe');
+            const loginBtn = document.getElementById('loginBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const authContainer = document.getElementById('authContainer');
+            const contentFrame = document.getElementById('contentFrame');
+            const userProfile = document.getElementById('userProfile');
+            const username = document.getElementById('username');
+            const subscriptionInfo = document.getElementById('subscriptionInfo');
+            const profileMenu = document.getElementById('profileMenu');
+            const openVpnBtn = document.getElementById('openVpnBtn');
+            const logoutMenuBtn = document.getElementById('logoutMenuBtn');
+            const userAvatar = document.getElementById('userAvatar');
+
+            let currentToken = '';
+            let currentVpnUrl = '';
+
+            // Установка приветствия в зависимости от времени суток
+            const hour = new Date().getHours();
+            if (hour >= 5 && hour < 12) {
+                greeting.textContent = 'Доброе утро!';
+            } else if (hour >= 12 && hour < 18) {
+                greeting.textContent = 'Добрый день!';
+            } else if (hour >= 18 && hour < 23) {
+                greeting.textContent = 'Добрый вечер!';
+            } else {
+                greeting.textContent = 'Доброй ночи!';
+            }
+            greeting.textContent += ' Пожалуйста, введите ключ доступа.';
+
+            // Проверка сохраненного токена
+            const savedToken = localStorage.getItem('savedToken');
+            if (savedToken) {
+                tokenInput.value = savedToken;
+                checkToken(savedToken);
+            }
+
+            // Обработчик входа
+            loginBtn.addEventListener('click', function() {
+                const token = tokenInput.value.trim();
+                if (token) {
+                    if (rememberMe.checked) {
+                        localStorage.setItem('savedToken', token);
+                    }
+                    checkToken(token);
+                }
+            });
+
+            // Проверка токена и перенаправление
+            function checkToken(token) {
+                currentToken = token;
+                
+                if (token.startsWith('d2vtst')) {
+                    currentVpnUrl = 'https://dinovpn.github.io/1mec/';
+                    updateUserInfo('Тестовая подписка');
+                    showContent();
+                } else if (token.startsWith('yd2stFh')) {
+                    currentVpnUrl = 'https://dinovpn.github.io/1year/';
+                    updateUserInfo('Подписка: 365 дней');
+                    showContent();
+                } else if (token.startsWith('ed2')) {
+                    currentVpnUrl = 'https://dinovpn.github.io/30d/';
+                    updateUserInfo('Подписка: 30 дней');
+                    showContent();
+                }
+            }
+
+            // Обновление информации о пользователе
+            function updateUserInfo(subscription) {
+                // Здесь можно получить данные пользователя Telegram через Telegram WebApp API
+                // Для демонстрации используем фиктивные данные
+                username.textContent = 'Telegram User';
+                subscriptionInfo.textContent = subscription;
+            }
+
+            // Показать контент и скрыть форму авторизации
+            function showContent() {
+                authContainer.style.display = 'none';
+                contentFrame.src = currentVpnUrl;
+                contentFrame.style.display = 'block';
+                userProfile.style.display = 'flex';
+                initLogoutButton();
+            }
+
+            // Инициализация кнопки выхода (требуется тройное нажатие назад)
+            let backCount = 0;
+            function initLogoutButton() {
+                window.onpopstate = function(event) {
+                    backCount++;
+                    if (backCount >= 3) {
+                        logoutBtn.style.display = 'block';
+                    }
+                };
+            }
+
+            // Обработчик выхода
+            function logout() {
+                localStorage.removeItem('savedToken');
+                contentFrame.src = '';
+                contentFrame.style.display = 'none';
+                authContainer.style.display = 'block';
+                logoutBtn.style.display = 'none';
+                userProfile.style.display = 'none';
+                profileMenu.style.display = 'none';
+                backCount = 0;
+                tokenInput.value = '';
+                currentToken = '';
+                currentVpnUrl = '';
+                subscriptionInfo.textContent = 'Не авторизован';
+            }
+
+            logoutBtn.addEventListener('click', logout);
+            logoutMenuBtn.addEventListener('click', logout);
+
+            // Также разрешаем вход по нажатию Enter
+            tokenInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loginBtn.click();
+                }
+            });
+
+            // Обработчики для профиля пользователя
+            userProfile.addEventListener('click', function() {
+                profileMenu.style.display = profileMenu.style.display === 'flex' ? 'none' : 'flex';
+            });
+
+            openVpnBtn.addEventListener('click', function() {
+                if (currentVpnUrl) {
+                    contentFrame.src = currentVpnUrl;
+                    contentFrame.style.display = 'block';
+                    authContainer.style.display = 'none';
+                    profileMenu.style.display = 'none';
+                } else {
+                    alert('Пожалуйста, сначала войдите');
+                    logout();
+                }
+            });
+
+            // Закрытие меню при клике вне его
+            document.addEventListener('click', function(event) {
+                if (!userProfile.contains(event.target) && !profileMenu.contains(event.target)) {
+                    profileMenu.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
